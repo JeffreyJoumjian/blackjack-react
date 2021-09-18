@@ -1,0 +1,61 @@
+html,
+body,
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root,
+#root > div {
+  width: 100%;
+  height: 100%;
+}
+
+.App {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+
+  background-repeat: repeat;
+  color: white;
+}
+
+input {
+  width: 120px;
+}
+
+.player-container,
+.opponent-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 200px;
+  height: 200px;
+}
+
+.player-container {
+  margin-right: 100px;
+}
+
+.ready-container {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.ready-indicator {
+  margin-left: 10px;
+  height: 8px;
+  width: 8px;
+  background: #a6a6a6;
+  border-radius: 100%;
+}
+
+.ready {
+  background: #23e223;
+}
