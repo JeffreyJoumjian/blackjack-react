@@ -2,22 +2,25 @@ const suits = ["hearts", "spades", "clubs", "diamonds"];
 let deck = [];
 
 class Player {
-	playerIndex; status; score; cards;
+	playerIndex; connectionStatus; winStatus; score; cards;
 
 	constructor(playerIndex) {
 		this.playerIndex = playerIndex;
 		this.score = 0;
-		this.status = 0;
+		this.cards = [];
+		this.connectionStatus = "";
 	}
 }
 
-// generate 2 decks
+// generate 1 decks
 function generateDeck() {
 
 	for (let s = 0; s < 4; s++)
-		for (let i = 1; i <= 13; i++) {
+		for (let i = 1; i <= 13; i++)
 			deck.push({ value: i, suit: suits[s] });
-		}
+
+	// shuffle deck
+	deck.sort(() => 0.5 - Math.random());
 }
 
 function pickCard() {
@@ -56,38 +59,48 @@ function playerHasConnected(connections, io, socket) {
 	if (playerIndex === -1) return;
 
 	// player is connected but not ready
-	// let player = new Player(playerIndex);
-	socket.playerIndex = playerIndex;
-	connections[playerIndex] = false;
-	// connections[playerIndex] = new Player(playerIndex);
+	let player = new Player(playerIndex);
+	player.connectionStatus = "connected"
+
+	socket.player = player;
+
+	connections[playerIndex] = socket;
 }
 
 function playerHasDisconnected(connections, io, socket) {
 	socket.on('disconnect', () => {
-		const { playerIndex } = socket;
-		console.log(`player ${playerIndex} has disconnected`);
+		if (socket.player) {
 
-		// clear up available slot
-		connections[playerIndex] = null;
+			const { playerIndex } = socket.player;
+			console.log(`player ${playerIndex} has disconnected`);
+
+			// clear up available slot
+			socket.player = null;
+			connections[playerIndex] = null;
+		}
 	});
 }
 
+// done
 function playerIsReady(connections, io, socket) {
 
 	// player has readied up
-	socket.on('ready', (playerIndex) => {
+	socket.on('ready', () => {
+
+		const { playerIndex } = socket.player;
 
 		console.log(`player ${playerIndex} is ready`);
 
 		// let both players know that they readied up
-		io.emit('ready', playerIndex);
 
 		// player is connected and ready
-		connections[parseInt(playerIndex)] = true;
+		socket.player.connectionStatus = "ready";
+
+		io.emit('ready', playerIndex);
 
 		// if there are missing players => don't start
 		for (let i = 0; i < connections.length; i++)
-			if (!connections[i])
+			if (!connections[i] || connections[i].player.connectionStatus !== "ready")
 				return;
 
 		// if we're here then both players are connected and ready => start game
@@ -95,71 +108,142 @@ function playerIsReady(connections, io, socket) {
 	});
 }
 
+// done
+function getPlayers(connections) {
+	let players = [];
+	connections.forEach(con => players.push(con.player));
+	return players;
+}
 
-// SUGGESTION introduce deck and pick from deck instead of randomly
+// done
 function startGame(connections, io, socket) {
 
 	// generate deck
 	generateDeck();
 
 	// generate cards for all players and send
-	const playersCards = [];
+	// const playersCards = [];
 
 	// for each connection
 	for (let i = 0; i < connections.length; i++) {
 
-		// set connection to false => in game
-		connections[i] = false;
+		connections[i].player.connectionStatus = "playing";
 
 		let playerCards = dealHand();
 
-		playersCards.push({ playerIndex: i, playerCards });
+		connections[i].player.cards = playerCards;
+		connections[i].player.score = calculateScore(playerCards);
+		checkPlayerWin(connections, io, socket);
 	}
 
 	console.log('dealt hands');
 
-	io.emit('hands', playersCards);
+	io.emit('hands', getPlayers(connections));
 	io.emit('start');
 }
 
-function hit(io, socket) {
+// done
+function calculateScore(cards) {
+
+	let score = 0;
+	let aceCounter = 0;
+
+	for (let i = 0; i < cards.length; i++) {
+		let card = parseInt(cards[i].value);
+		if (card === 1 && aceCounter === 0) {
+			aceCounter++;
+			score += 11
+		}
+		else {
+			score += card;
+		}
+
+		if (score > 21 && aceCounter === 1) {
+			score -= 10;
+			aceCounter = -1;
+		}
+	}
+	return score;
+}
+
+// todo
+function checkPlayerWin(connections, io, socket) {
+
+	// check individual player
+	let { player } = socket;
+	if (player.score > 21) {
+		player.winStatus = "lost";
+		// io.emit('lose', player.playerIndex);
+	}
+	if (player.score === 21) {
+		player.winStatus = "won";
+		// io.emit('win',player.playerIndex );
+	}
+
+	// check with other player
+	const otherPlayer = connections[1 - player.playerIndex].player;
+
+	if (player.winStatus === "stand") {
+		if (otherPlayer.winStatus === "stand") {
+			if (player.score > otherPlayer.score) {
+				player.winStatus = "won";
+				otherPlayer.winStatus = "lost";
+			}
+			else if (player.score === otherPlayer.score) {
+				player.winStatus = "draw";
+				otherPlayer.winStatus = "draw";
+			}
+			else {
+				player.winStatus = "lost";
+				otherPlayer.winStatus = "won";
+			}
+		}
+
+		if (otherPlayer.winStatus === "lost")
+			player.winStatus = "won";
+
+		if (otherPlayer.winStatus === "won")
+			player.winStatus = "lost";
+	}
+
+	if (player.winStatus === "won" && otherPlayer.winStatus === "won" && player.score === 21) {
+		player.winStatus = "draw";
+		otherPlayer.winStatus = "draw";
+	}
+
+	// let showResults= ["won", "lost", "draw"];
+
+	// showResults.every(res => player.winStatus!=="status")
+}
+
+// done
+function hit(connections, io, socket) {
 	socket.on('hit', () => {
 
-		// pick a random card from the deck
-		let newCard = pickCard();
+		if (socket.player.score < 21) {
 
-		// generate a random card and send
-		// let newCard = {
-		// 	value: Math.floor(Math.random() * 12) + 1,
-		// 	suit: suits[Math.floor(Math.random() * 4)]
-		// };
-		io.emit('hit', { playerIndex: socket.playerIndex, newCard });
-	})
-}
+			// pick a random card from the deck
+			let newCard = pickCard();
 
-function stand(io, socket) {
-	socket.on('stand', () => io.emit("stand", socket.playerIndex));
-}
+			socket.player.cards.push(newCard);
+			socket.player.score = calculateScore(socket.player.cards);
 
-// SUGGESTION have a bigger function to incorporate dealer
-function playerHasWon(io, socket) {
-	socket.on('win', () => {
-		console.log('win');
-		io.emit('win', socket.playerIndex)
+			checkPlayerWin(connections, io, socket);
+
+			io.emit('hit', getPlayers(connections));
+		}
 	});
 }
 
-function playerHasLost(io, socket) {
-	socket.on('lose', () => {
-		console.log('lose');
-		io.emit('lose', socket.playerIndex)
-	});
-}
+// done
+function stand(connections, io, socket) {
+	socket.on('stand', () => {
+		console.log('stand');
+		socket.player.winStatus = "stand";
 
-function playersHaveDrawn(io, socket) {
-	socket.on('draw', () => {
-		console.log('draw');
-		io.emit('draw');
+		checkPlayerWin(connections, io, socket);
+
+		io.emit('stand', getPlayers(connections));
 	});
 }
 
@@ -169,7 +253,5 @@ module.exports = {
 	playerIsReady,
 	hit,
 	stand,
-	playerHasWon,
-	playerHasLost,
-	playersHaveDrawn
+	checkPlayerWin
 }

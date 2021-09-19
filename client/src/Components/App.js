@@ -1,15 +1,29 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import AudioManager from '../Audio/AudioManager';
 
 import './App.css';
-import Game from './Game.js';
-import Card from './Card/Card';
 import Table from './Table/Table';
 
 const socket = io.connect('http://localhost:3000');
 
 function App() {
+
+	const defaultPlayerState = {
+		playerIndex: 0,
+		score: 0,
+		cards: [],
+		connectionStatus: "",
+		winStatus: ""
+	};
+
+	const defaultOpponentState = {
+		playerIndex: 0,
+		score: 0,
+		cards: [],
+		connectionStatus: "",
+		winStatus: ""
+	};
 
 	const defaultState = {
 		playerIndex: 0,
@@ -17,195 +31,112 @@ function App() {
 		isReadyOpponent: false,
 		gameIsFull: false,
 		gameHasStarted: false,
-		playerCards: [],
-		playerScore: 0,
-		playerWinStatus: "",
-		opponentScore: 0,
-		opponentCards: [],
-		opponentWinStatus: ""
 	};
 
+	const [playerState, setPlayerState] = useState(defaultPlayerState);
+	const [opponentState, setOpponentState] = useState(defaultOpponentState);
+
 	const [state, setState] = useState(defaultState);
-	const [timer, setTimer] = useState(6);
-	const [timerOn, setTimerOn] = useState(false);
+	// const [timer, setTimer] = useState(6);
+	// const [timerOn, setTimerOn] = useState(false);
 
 	let interval = null;
 
+	// todo
 	function playerIndexListener() {
 		socket.off('player-index').on('player-index', (playerIndex) => {
 			if (playerIndex === -1)
 				return setState({ ...state, gameIsFull: true })
-			setState({ ...state, playerIndex });
+			setPlayerState({ ...playerState, playerIndex });
 		});
 	}
 
+
+	// done
 	function playerReadyListener() {
-		const { playerIndex, isReadyPlayer, isReadyOpponent } = state;
-
-		socket.off('ready').on('ready', (dataPlayerIndex) => {
-
-			setState({
-				...state,
-				isReadyPlayer: parseInt(dataPlayerIndex) === playerIndex ? true : isReadyPlayer,
-				isReadyOpponent: parseInt(dataPlayerIndex) !== playerIndex ? true : isReadyOpponent
-			});
+		socket.off('ready').on('ready', (playerIndex) => {
+			if (playerIndex === playerState.playerIndex)
+				setPlayerState({ ...playerState, connectionStatus: 'ready' });
+			else
+				setOpponentState({ ...opponentState, connectionStatus: 'ready' });
 		});
 	}
+
 
 	function gameStartListener() {
 		socket.off('start').on('start', (data) => {
 			setState({ ...state, gameHasStarted: true });
-			setTimer(6);
-			setTimerOn(true);
+			// setTimer(6);
+			// setTimerOn(true);
 		});
 	}
 
+
+	// done
 	function getHandsListener() {
-		const { playerIndex } = state;
-
-
-		// refactor this to support more players
-		socket.off('hands').on('hands', (playersCards) => {
-			let newState = {};
-			let playerScore = 0;
+		socket.off('hands').on('hands', (players) => {
 
 			AudioManager.playHandSound();
-
-			playersCards.forEach(player => {
-				if (player.playerIndex === playerIndex) {
-					playerScore = calculateScore(player.playerCards);
-
-					newState.playerCards = player.playerCards;
-					newState.playerScore = playerScore;
-				}
-				else {
-					playerScore = calculateScore(player.playerCards);
-
-					newState.opponentCards = player.playerCards;
-					newState.opponentScore = playerScore;
-				}
-			});
-
-			setState({ ...state, ...newState });
-
+			updatePlayerStates(players);
 		});
 	}
 
+	// done
 	function hitListener() {
-		const { playerCards, opponentCards } = state;
-
-		socket.off('hit').on('hit', ({ playerIndex, newCard }) => {
-			let newPlayerCards = [];
-			let newPlayerScore = 0;
-			if (playerIndex === state.playerIndex) {
-				newPlayerCards = playerCards;
-				newPlayerScore = playerScore;
-
-				newPlayerCards.push(newCard);
-				newPlayerScore += parseInt(newCard.value);
-
-
-				setState({ ...state, playerCards: newPlayerCards, playerScore: newPlayerScore });
-			}
-			else {
-				newPlayerCards = opponentCards;
-				newPlayerScore = opponentScore;
-
-				newPlayerCards.push(newCard);
-				newPlayerScore += parseInt(newCard.value);
-
-				setState({ ...state, opponentCards: newPlayerCards, opponentScore: newPlayerScore });
-			}
+		socket.off('hit').on('hit', (players) => {
+			updatePlayerStates(players);
 		});
 	}
 
-	function newGameListener() {
-		if (playerWinStatus && opponentWinStatus) {
-			setTimeout(() => {
-				setState({ ...defaultState, playerIndex });
-			}, 1500);
-		}
+	// todo
+	// function newGameListener() {
+	// 	if (playerWinStatus && opponentWinStatus) {
+	// 		setTimeout(() => {
+	// 			setState({ ...defaultState, playerIndex });
+	// 		}, 1500);
+	// 	}
+	// }
+
+	// todo
+	function standListener() {
+		socket.off('stand').on('stand', (players) => updatePlayerStates(players));
 	}
 
-	function playerWinStatusListener() {
-		const { playerScore, playerWinStatus } = state;
+	// todo
+	// function setPlayerStatus(playerIndex, winStatus) {
+	// 	if (playerIndex === playerState.playerIndex)
+	// 		setPlayerState({ ...playerState, winStatus });
+	// 	else
+	// 		setOpponentState({ ...opponentState, winStatus });
+	// }
 
-		// if player has a status return
-		if (!playerWinStatus) {
-			if (playerScore === 21)
-				socket.emit('win', playerIndex);
-			if (playerScore > 21)
-				socket.emit('lose', playerIndex);
-
-			// if (opponentWinStatus && opponentWinStatus !== "stand" && playerScore < 21)
-			// 	socket.emit('win', playerIndex);
-
-			if (playerScore !== 0 && playerScore === opponentScore)
-				socket.emit('draw', playerIndex)
-		}
-
-		if (playerWinStatus === "stand") {
-			if (opponentWinStatus === "stand") {
-				if (playerScore > opponentScore)
-					socket.emit("win", playerIndex);
-				else if (playerScore === opponentScore)
-					socket.emit("draw");
-				else
-					socket.emit("lose", playerIndex);
-			}
-			else if (opponentWinStatus === "lost")
-				socket.emit("win", playerIndex);
-			else if (opponentWinStatus === "win") {
-				if (playerScore === opponentScore)
-					socket.emit("draw", playerIndex);
-				else
-					socket.emit("lose", playerIndex);
-			}
-		}
-
-		socket.off('stand').on('stand', (playerIndex) => setPlayerStatus(playerIndex, "stand"));
-
-		socket.off('win').on('win', (playerIndex) => setPlayerStatus(playerIndex, "won"));
-
-		socket.off('lose').on('lose', (playerIndex) => setPlayerStatus(playerIndex, "lost"));
-
-		socket.off('draw').on('draw', (playerIndex) => setPlayerStatus(playerIndex, "draw"));
-	}
-
-	function setPlayerStatus(playerIndex, status) {
-
-		let { playerWinStatus, opponentWinStatus } = state;
-
-		let newState = { playerWinStatus, opponentWinStatus };
-
-		if (status === "draw") {
-			newState.playerWinStatus = status;
-			newState.opponentWinStatus = status;
-		} else {
-			if (playerIndex === state.playerIndex)
-				newState.playerWinStatus = status;
+	// done
+	function updatePlayerStates(players) {
+		players.forEach(player => {
+			console.log(player.playerIndex, playerState.playerIndex, player.playerIndex === playerState.playerIndex);
+			if (player.playerIndex === playerState.playerIndex)
+				setPlayerState({ ...playerState, ...player });
 			else
-				newState.opponentWinStatus = status;
-		}
+				setOpponentState({ ...opponentState, ...player });
 
-		setState({ ...state, ...newState });
+		});
 	}
 
-	function startTimer() {
-		interval = null;
+	// function startTimer() {
+	// 	interval = null;
 
-		if (timer <= 0) {
-			document.querySelector('.action #stand')
-			socket.emit("stand", playerIndex);
-			setTimerOn(false);
-		}
+	// 	if (timer <= 0) {
+	// 		document.querySelector('.action #stand')
+	// 		socket.emit("stand", playerIndex);
+	// 		setTimerOn(false);
+	// 	}
 
 
-		if (gameHasStarted && timerOn && timer > 0)
-			interval = setInterval(() => setTimer(timer - 0.01), 10);
-		else
-			clearInterval(interval);
-	}
+	// 	if (gameHasStarted && timerOn && timer > 0)
+	// 		interval = setInterval(() => setTimer(timer - 0.01), 10);
+	// 	else
+	// 		clearInterval(interval);
+	// }
 
 	function clear() {
 		// disconnect listener from all sockets to be safe
@@ -226,7 +157,7 @@ function App() {
 	useEffect(() => {
 
 		// start timer
-		startTimer();
+		// startTimer();
 
 		// get player index
 		playerIndexListener();
@@ -244,58 +175,33 @@ function App() {
 		hitListener();
 
 		// listen for when players win or lose
-		playerWinStatusListener();
+		standListener();
 
 		// new hand listener
-		newGameListener();
+		// newGameListener();
 
 		return clear;
 	});
 
-	function calculateScore(cards) {
-		let score = 0;
-		let aceCounter = 0;
-
-		for (let i = 0; i < cards.length; i++) {
-			let card = parseInt(cards[i].value);
-			if (card === 1 && aceCounter === 0) {
-				aceCounter++;
-				score += 11
-			}
-			else {
-				score += card;
-			}
-
-			if (score > 21 && aceCounter === 1) {
-				score -= 10;
-				aceCounter = -1;
-			}
-		}
-		return score;
-	}
-
 	function onClickReady() {
-		socket.emit('ready', state.playerIndex);
+		socket.emit('ready');
 	}
 
 	function onClickHit(e) {
-		if (playerScore < 21) {
+		if (playerState.score < 21) {
 			AudioManager.playCardSound();
-			socket.emit('hit', playerIndex);
+			socket.emit('hit');
 		}
 	}
 
 	function onClickStand(e) {
 		e.target.disabled = true;
-		socket.emit("stand", playerIndex);
-		setTimerOn(false);
+		socket.emit('stand');
+		// setTimerOn(false);
 	}
 
-	const { isReadyPlayer, isReadyOpponent,
-		gameHasStarted, gameIsFull,
-		playerCards, playerScore, playerWinStatus,
-		opponentCards, opponentScore, opponentWinStatus,
-		playerIndex } = state;
+	const { gameHasStarted, gameIsFull } = state;
+
 
 	return (
 		<div className="App" style={{
@@ -303,15 +209,11 @@ function App() {
 		}}>
 
 			{/* <Table
-				timer={timer}
-				onClickHit={onClickHit}
-				onClickStand={onClickStand}
-				playerCards={playerCards}
-				playerScore={playerScore}
-				playerWinStatus={playerWinStatus}
-				opponentCards={opponentCards}
-				opponentScore={opponentScore}
-				opponentWinStatus={opponentWinStatus}
+					// timer={timer}
+					onClickHit={onClickHit}
+					onClickStand={onClickStand}
+					player={playerState}
+					opponent={opponentState}
 			/> */}
 
 			{gameIsFull && <h1>Game is full</h1>}
@@ -323,7 +225,7 @@ function App() {
 
 						<div className="ready-container">
 							<h2>You</h2>
-							<div className={`ready-indicator${isReadyPlayer ? " ready" : ""}`}></div>
+							<div className={`ready-indicator${playerState.connectionStatus === "ready" ? " ready" : ""}`}></div>
 						</div>
 						<button onClick={onClickReady}>Ready</button>
 					</div>
@@ -331,7 +233,7 @@ function App() {
 					<div className="opponent-container">
 						<div className="ready-container">
 							<h2>Opponent</h2>
-							<div className={`ready-indicator${isReadyOpponent ? " ready" : ""}`}></div>
+							<div className={`ready-indicator${opponentState.connectionStatus === "ready" ? " ready" : ""}`}></div>
 						</div>
 					</div>
 				</>
@@ -339,15 +241,11 @@ function App() {
 
 			{gameHasStarted && !gameIsFull &&
 				<Table
-					timer={timer}
+					// timer={timer}
 					onClickHit={onClickHit}
 					onClickStand={onClickStand}
-					playerCards={playerCards}
-					playerScore={playerScore}
-					playerWinStatus={playerWinStatus}
-					opponentCards={opponentCards}
-					opponentScore={opponentScore}
-					opponentWinStatus={opponentWinStatus}
+					player={playerState}
+					opponent={opponentState}
 				/>
 			}
 		</div>

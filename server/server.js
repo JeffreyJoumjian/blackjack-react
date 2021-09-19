@@ -19,20 +19,14 @@ io.on('connection', socket => {
 	GameManager.playerIsReady(connections, io, socket);
 
 	// player clicks hit
-	GameManager.hit(io, socket);
+	GameManager.hit(connections, io, socket);
 
 	// player clicks hit
-	GameManager.stand(io, socket);
+	GameManager.stand(connections, io, socket);
 
 	// player disconnects or reloads
 	// SUGGESTION make player join back session
 	GameManager.playerHasDisconnected(connections, io, socket);
-
-	// check whether players have won or lost
-	GameManager.playerHasWon(io, socket);
-	GameManager.playerHasLost(io, socket);
-	GameManager.playersHaveDrawn(io, socket);
-
 });
 
 

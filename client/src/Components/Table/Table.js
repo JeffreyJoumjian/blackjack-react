@@ -8,17 +8,17 @@ export default function Table(props) {
 	const [standDisplay, setStandDisplay] = useState(true);
 
 	const {
-		playerCards, playerScore, playerWinStatus,
-		opponentCards, opponentScore, opponentWinStatus,
-		timer
+		player, opponent
+		// timer
 	} = props;
 
+
 	useEffect(() => {
-		if (playerScore >= 21) {
+		if (player.score >= 21) {
 			setHitDisplay(false);
 			setStandDisplay(false);
 		}
-	}, [playerScore]);
+	}, [player.score]);
 
 
 	function onClickHit(e) {
@@ -31,29 +31,29 @@ export default function Table(props) {
 		props.onClickStand(e);
 	}
 
-	function calculateBackgroundColor() {
-		if (timer > 4)
-			return "#33d900";
-		else if (timer > 2)
-			return "#d6a51e";
-		else
-			return "#d71313";
-	}
+	// function calculateBackgroundColor() {
+	// 	if (timer > 4)
+	// 		return "#33d900";
+	// 	else if (timer > 2)
+	// 		return "#d6a51e";
+	// 	else
+	// 		return "#d71313";
+	// }
 
 	return (
 		<div className="table">
 			<div className="player">
-				<p className="status player-status">{playerWinStatus && `${playerWinStatus}`}</p>
+				<p className="status player-status">{player.winStatus && `${player.winStatus}`}</p>
 				<div className="hand player-hand">
-					{playerCards.map((card, i) =>
+					{player.cards.map((card, i) =>
 						<Card value={card.value} suit={card.suit} key={i} position={i} />)
 					}
-					<div className="counter">{`${playerScore}`}</div>
+					<div className="counter">{`${player.score}`}</div>
 				</div>
-				<div className="timer" style={{
+				{/* <div className="timer" style={{
 					width: `${timer * 200 / 6}px`,
 					background: `${calculateBackgroundColor()}`
-				}} />
+				}} /> */}
 
 				<div className="actions">
 					{hitDisplay && <button id="hit" onClick={onClickHit}>Hit</button>}
@@ -63,12 +63,12 @@ export default function Table(props) {
 			</div>
 
 			<div className="opponent">
-				<p className="status opponent-status">{opponentWinStatus && `${opponentWinStatus}`}</p>
+				<p className="status opponent-status">{opponent.winStatus && `${opponent.winStatus}`}</p>
 				<div className="hand opponent-hand">
-					{opponentCards.map((card, i) =>
+					{opponent.cards.map((card, i) =>
 						<Card value={card.value} suit={card.suit} key={i} position={i} />)
 					}
-					<div className="counter">{`${opponentScore}`}</div>
+					<div className="counter">{`${opponent.score}`}</div>
 				</div>
 
 			</div>
