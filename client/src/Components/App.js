@@ -26,7 +26,6 @@ function App() {
 	};
 
 	const defaultState = {
-		playerIndex: 0,
 		isReadyPlayer: false,
 		isReadyOpponent: false,
 		gameIsFull: false,
@@ -37,8 +36,8 @@ function App() {
 	const [opponentState, setOpponentState] = useState(defaultOpponentState);
 
 	const [state, setState] = useState(defaultState);
-	// const [timer, setTimer] = useState(6);
-	// const [timerOn, setTimerOn] = useState(false);
+	const [timer, setTimer] = useState(6);
+	const [timerOn, setTimerOn] = useState(false);
 
 	let interval = null;
 
@@ -66,8 +65,8 @@ function App() {
 	function gameStartListener() {
 		socket.off('start').on('start', (data) => {
 			setState({ ...state, gameHasStarted: true });
-			// setTimer(6);
-			// setTimerOn(true);
+			setTimer(6);
+			setTimerOn(true);
 		});
 	}
 
@@ -77,7 +76,7 @@ function App() {
 		socket.off('hands').on('hands', (players) => {
 
 			AudioManager.playHandSound();
-			updatePlayerStates(players);
+			updatePlayerStates(players, true);
 		});
 	}
 
@@ -102,41 +101,36 @@ function App() {
 		socket.off('stand').on('stand', (players) => updatePlayerStates(players));
 	}
 
-	// todo
-	// function setPlayerStatus(playerIndex, winStatus) {
-	// 	if (playerIndex === playerState.playerIndex)
-	// 		setPlayerState({ ...playerState, winStatus });
-	// 	else
-	// 		setOpponentState({ ...opponentState, winStatus });
-	// }
+	function showResultsListener() {
+		socket.off('show-results').on('show-results', (players) => updatePlayerStates(players, true));
+	}
 
 	// done
-	function updatePlayerStates(players) {
+	function updatePlayerStates(players, hand = false) {
 		players.forEach(player => {
-			console.log(player.playerIndex, playerState.playerIndex, player.playerIndex === playerState.playerIndex);
 			if (player.playerIndex === playerState.playerIndex)
 				setPlayerState({ ...playerState, ...player });
 			else
-				setOpponentState({ ...opponentState, ...player });
+				if (hand)
+					setOpponentState({ ...opponentState, ...player });
 
 		});
 	}
 
-	// function startTimer() {
-	// 	interval = null;
+	function startTimer() {
+		interval = null;
 
-	// 	if (timer <= 0) {
-	// 		document.querySelector('.action #stand')
-	// 		socket.emit("stand", playerIndex);
-	// 		setTimerOn(false);
-	// 	}
+		if (timer <= 0 && timerOn) {
+			socket.emit("stand");
+			setTimerOn(false);
+		}
 
 
-	// 	if (gameHasStarted && timerOn && timer > 0)
-	// 		interval = setInterval(() => setTimer(timer - 0.01), 10);
-	// 	else
-	// 		clearInterval(interval);
-	// }
+		if (gameHasStarted && timerOn && timer > 0 && !playerState.winStatus)
+			interval = setInterval(() => setTimer(timer - 0.01), 10);
+		else
+			clearInterval(interval);
+	}
 
 	function clear() {
 		// disconnect listener from all sockets to be safe
@@ -157,7 +151,7 @@ function App() {
 	useEffect(() => {
 
 		// start timer
-		// startTimer();
+		startTimer();
 
 		// get player index
 		playerIndexListener();
@@ -176,6 +170,9 @@ function App() {
 
 		// listen for when players win or lose
 		standListener();
+
+		// listen for results
+		showResultsListener();
 
 		// new hand listener
 		// newGameListener();
@@ -197,7 +194,7 @@ function App() {
 	function onClickStand(e) {
 		e.target.disabled = true;
 		socket.emit('stand');
-		// setTimerOn(false);
+		setTimerOn(false);
 	}
 
 	const { gameHasStarted, gameIsFull } = state;
@@ -241,7 +238,7 @@ function App() {
 
 			{gameHasStarted && !gameIsFull &&
 				<Table
-					// timer={timer}
+					timer={timer}
 					onClickHit={onClickHit}
 					onClickStand={onClickStand}
 					player={playerState}

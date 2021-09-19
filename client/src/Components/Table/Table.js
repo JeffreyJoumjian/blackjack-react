@@ -8,17 +8,17 @@ export default function Table(props) {
 	const [standDisplay, setStandDisplay] = useState(true);
 
 	const {
-		player, opponent
-		// timer
+		player, opponent,
+		timer
 	} = props;
 
 
 	useEffect(() => {
-		if (player.score >= 21) {
+		if (player.score >= 21 || timer <= 0) {
 			setHitDisplay(false);
 			setStandDisplay(false);
 		}
-	}, [player.score]);
+	}, [player.score, timer]);
 
 
 	function onClickHit(e) {
@@ -31,14 +31,14 @@ export default function Table(props) {
 		props.onClickStand(e);
 	}
 
-	// function calculateBackgroundColor() {
-	// 	if (timer > 4)
-	// 		return "#33d900";
-	// 	else if (timer > 2)
-	// 		return "#d6a51e";
-	// 	else
-	// 		return "#d71313";
-	// }
+	function calculateBackgroundColor() {
+		if (timer > 4)
+			return "#33d900";
+		else if (timer > 2)
+			return "#d6a51e";
+		else
+			return "#d71313";
+	}
 
 	return (
 		<div className="table">
@@ -50,10 +50,11 @@ export default function Table(props) {
 					}
 					<div className="counter">{`${player.score}`}</div>
 				</div>
-				{/* <div className="timer" style={{
+				<div className="timer" style={{
 					width: `${timer * 200 / 6}px`,
-					background: `${calculateBackgroundColor()}`
-				}} /> */}
+					background: `${calculateBackgroundColor()}`,
+					opacity: `${player.winStatus ? 0 : 1}`
+				}} />
 
 				<div className="actions">
 					{hitDisplay && <button id="hit" onClick={onClickHit}>Hit</button>}

@@ -206,14 +206,22 @@ function checkPlayerWin(connections, io, socket) {
 			player.winStatus = "lost";
 	}
 
+	if (player.winStatus === "lost" && otherPlayer.winStatus === "stand")
+		otherPlayer.winStatus = "won";
+
+	if (player.winStatus === "won" && otherPlayer.winStatus === "stand")
+		otherPlayer.winStatus = "lost";
+
 	if (player.winStatus === "won" && otherPlayer.winStatus === "won" && player.score === 21) {
 		player.winStatus = "draw";
 		otherPlayer.winStatus = "draw";
 	}
 
-	// let showResults= ["won", "lost", "draw"];
+	let showResultsWhen = ["won", "lost", "draw"];
+	let showResults = !!(showResultsWhen.find(res => res === player.winStatus) && showResultsWhen.find(res => res === otherPlayer.winStatus));
 
-	// showResults.every(res => player.winStatus!=="status")
+	if (showResults)
+		io.emit('show-results', getPlayers(connections));
 }
 
 // done
