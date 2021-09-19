@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import io from 'socket.io-client';
 import AudioManager from '../Audio/AudioManager';
 
@@ -26,6 +26,10 @@ function App() {
 	};
 
 	const [state, setState] = useState(defaultState);
+	const [timer, setTimer] = useState(6);
+	const [timerOn, setTimerOn] = useState(false);
+
+	let interval = null;
 
 	function playerIndexListener() {
 		socket.off('player-index').on('player-index', (playerIndex) => {
@@ -39,7 +43,7 @@ function App() {
 		const { playerIndex, isReadyPlayer, isReadyOpponent } = state;
 
 		socket.off('ready').on('ready', (dataPlayerIndex) => {
-			console.log(`player ${dataPlayerIndex} is ready`);
+
 			setState({
 				...state,
 				isReadyPlayer: parseInt(dataPlayerIndex) === playerIndex ? true : isReadyPlayer,
@@ -49,11 +53,16 @@ function App() {
 	}
 
 	function gameStartListener() {
-		socket.off('start').on('start', (data) => setState({ ...state, gameHasStarted: true }));
+		socket.off('start').on('start', (data) => {
+			setState({ ...state, gameHasStarted: true });
+			setTimer(6);
+			setTimerOn(true);
+		});
 	}
 
 	function getHandsListener() {
 		const { playerIndex } = state;
+
 
 		// refactor this to support more players
 		socket.off('hands').on('hands', (playersCards) => {
@@ -61,6 +70,7 @@ function App() {
 			let playerScore = 0;
 
 			AudioManager.playHandSound();
+
 			playersCards.forEach(player => {
 				if (player.playerIndex === playerIndex) {
 					playerScore = calculateScore(player.playerCards);
@@ -109,6 +119,13 @@ function App() {
 		});
 	}
 
+	function newGameListener() {
+		if (playerWinStatus && opponentWinStatus) {
+			setTimeout(() => {
+				setState({ ...defaultState, playerIndex });
+			}, 1500);
+		}
+	}
 
 	function playerWinStatusListener() {
 		const { playerScore, playerWinStatus } = state;
@@ -131,13 +148,19 @@ function App() {
 			if (opponentWinStatus === "stand") {
 				if (playerScore > opponentScore)
 					socket.emit("win", playerIndex);
+				else if (playerScore === opponentScore)
+					socket.emit("draw");
 				else
 					socket.emit("lose", playerIndex);
 			}
 			else if (opponentWinStatus === "lost")
 				socket.emit("win", playerIndex);
-			else if (opponentWinStatus === "win")
-				socket.emit("lose", playerIndex);
+			else if (opponentWinStatus === "win") {
+				if (playerScore === opponentScore)
+					socket.emit("draw", playerIndex);
+				else
+					socket.emit("lose", playerIndex);
+			}
 		}
 
 		socket.off('stand').on('stand', (playerIndex) => setPlayerStatus(playerIndex, "stand"));
@@ -168,6 +191,22 @@ function App() {
 		setState({ ...state, ...newState });
 	}
 
+	function startTimer() {
+		interval = null;
+
+		if (timer <= 0) {
+			document.querySelector('.action #stand')
+			socket.emit("stand", playerIndex);
+			setTimerOn(false);
+		}
+
+
+		if (gameHasStarted && timerOn && timer > 0)
+			interval = setInterval(() => setTimer(timer - 0.01), 10);
+		else
+			clearInterval(interval);
+	}
+
 	function clear() {
 		// disconnect listener from all sockets to be safe
 		socket.off('player-index');
@@ -179,9 +218,15 @@ function App() {
 		socket.off('win');
 		socket.off('lose');
 		socket.off('draw');
+
+		clearInterval(interval);
 	}
 
+
 	useEffect(() => {
+
+		// start timer
+		startTimer();
 
 		// get player index
 		playerIndexListener();
@@ -200,6 +245,9 @@ function App() {
 
 		// listen for when players win or lose
 		playerWinStatusListener();
+
+		// new hand listener
+		newGameListener();
 
 		return clear;
 	});
@@ -240,6 +288,7 @@ function App() {
 	function onClickStand(e) {
 		e.target.disabled = true;
 		socket.emit("stand", playerIndex);
+		setTimerOn(false);
 	}
 
 	const { isReadyPlayer, isReadyOpponent,
@@ -254,6 +303,7 @@ function App() {
 		}}>
 
 			{/* <Table
+				timer={timer}
 				onClickHit={onClickHit}
 				onClickStand={onClickStand}
 				playerCards={playerCards}
@@ -289,6 +339,7 @@ function App() {
 
 			{gameHasStarted && !gameIsFull &&
 				<Table
+					timer={timer}
 					onClickHit={onClickHit}
 					onClickStand={onClickStand}
 					playerCards={playerCards}

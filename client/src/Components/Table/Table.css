@@ -80,3 +80,9 @@
 .actions button:active {
   transform: translateY(1px);
 }
+
+.timer {
+  margin-top: 20px;
+  height: 10px;
+  border-radius: 10px;
+}

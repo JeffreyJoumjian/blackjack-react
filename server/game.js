@@ -107,6 +107,10 @@ function startGame(connections, io, socket) {
 
 	// for each connection
 	for (let i = 0; i < connections.length; i++) {
+
+		// set connection to false => in game
+		connections[i] = false;
+
 		let playerCards = dealHand();
 
 		playersCards.push({ playerIndex: i, playerCards });
