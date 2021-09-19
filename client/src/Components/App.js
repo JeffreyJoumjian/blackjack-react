@@ -11,8 +11,7 @@ const socket = io.connect('http://localhost:3000');
 
 function App() {
 
-	const [state, setState] = useState({
-		name: '',
+	const defaultState = {
 		playerIndex: 0,
 		isReadyPlayer: false,
 		isReadyOpponent: false,
@@ -24,7 +23,9 @@ function App() {
 		opponentScore: 0,
 		opponentCards: [],
 		opponentWinStatus: ""
-	});
+	};
+
+	const [state, setState] = useState(defaultState);
 
 	function playerIndexListener() {
 		socket.off('player-index').on('player-index', (playerIndex) => {
@@ -119,21 +120,27 @@ function App() {
 			if (playerScore > 21)
 				socket.emit('lose', playerIndex);
 
-			if (opponentWinStatus && opponentWinStatus !== "stay" && playerScore < 21)
-				socket.emit('win', playerIndex);
+			// if (opponentWinStatus && opponentWinStatus !== "stand" && playerScore < 21)
+			// 	socket.emit('win', playerIndex);
 
 			if (playerScore !== 0 && playerScore === opponentScore)
 				socket.emit('draw', playerIndex)
 		}
 
-		if (playerWinStatus === "stay" && opponentWinStatus === "stay") {
-			if (playerScore > opponentScore)
+		if (playerWinStatus === "stand") {
+			if (opponentWinStatus === "stand") {
+				if (playerScore > opponentScore)
+					socket.emit("win", playerIndex);
+				else
+					socket.emit("lose", playerIndex);
+			}
+			else if (opponentWinStatus === "lost")
 				socket.emit("win", playerIndex);
-			else
+			else if (opponentWinStatus === "win")
 				socket.emit("lose", playerIndex);
 		}
 
-		socket.off('stay').on('stay', (playerIndex) => setPlayerStatus(playerIndex, "stay"));
+		socket.off('stand').on('stand', (playerIndex) => setPlayerStatus(playerIndex, "stand"));
 
 		socket.off('win').on('win', (playerIndex) => setPlayerStatus(playerIndex, "won"));
 
@@ -168,7 +175,7 @@ function App() {
 		socket.off('start');
 		socket.off('hands');
 		socket.off('hit');
-		socket.off('stay');
+		socket.off('stand');
 		socket.off('win');
 		socket.off('lose');
 		socket.off('draw');
@@ -230,9 +237,9 @@ function App() {
 		}
 	}
 
-	function onClickStay(e) {
+	function onClickStand(e) {
 		e.target.disabled = true;
-		socket.emit("stay", playerIndex);
+		socket.emit("stand", playerIndex);
 	}
 
 	const { isReadyPlayer, isReadyOpponent,
@@ -248,7 +255,7 @@ function App() {
 
 			{/* <Table
 				onClickHit={onClickHit}
-				onClickStay={onClickStay}
+				onClickStand={onClickStand}
 				playerCards={playerCards}
 				playerScore={playerScore}
 				playerWinStatus={playerWinStatus}
@@ -283,7 +290,7 @@ function App() {
 			{gameHasStarted && !gameIsFull &&
 				<Table
 					onClickHit={onClickHit}
-					onClickStay={onClickStay}
+					onClickStand={onClickStand}
 					playerCards={playerCards}
 					playerScore={playerScore}
 					playerWinStatus={playerWinStatus}

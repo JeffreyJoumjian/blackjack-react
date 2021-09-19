@@ -22,7 +22,7 @@ io.on('connection', socket => {
 	GameManager.hit(io, socket);
 
 	// player clicks hit
-	GameManager.stay(io, socket);
+	GameManager.stand(io, socket);
 
 	// player disconnects or reloads
 	// SUGGESTION make player join back session

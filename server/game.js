@@ -133,8 +133,8 @@ function hit(io, socket) {
 	})
 }
 
-function stay(io, socket) {
-	socket.on('stay', () => io.emit("stay", socket.playerIndex));
+function stand(io, socket) {
+	socket.on('stand', () => io.emit("stand", socket.playerIndex));
 }
 
 // SUGGESTION have a bigger function to incorporate dealer
@@ -164,7 +164,7 @@ module.exports = {
 	playerHasDisconnected,
 	playerIsReady,
 	hit,
-	stay,
+	stand,
 	playerHasWon,
 	playerHasLost,
 	playersHaveDrawn

@@ -5,14 +5,14 @@ import './Table.css';
 export default function Table(props) {
 
 	const [hitDisplay, setHitDisplay] = useState(true);
-	const [stayDisplay, setStayDisplay] = useState(true);
+	const [standDisplay, setStandDisplay] = useState(true);
 
 	const { playerCards, playerScore, playerWinStatus, opponentCards, opponentScore, opponentWinStatus } = props;
 
 	useEffect(() => {
 		if (playerScore >= 21) {
 			setHitDisplay(false);
-			setStayDisplay(false);
+			setStandDisplay(false);
 		}
 	}, [playerScore]);
 
@@ -21,10 +21,10 @@ export default function Table(props) {
 		props.onClickHit(e);
 	}
 
-	function onClickStay(e) {
-		setStayDisplay(false);
+	function onClickStand(e) {
+		setStandDisplay(false);
 		setHitDisplay(false);
-		props.onClickStay(e);
+		props.onClickStand(e);
 	}
 
 
@@ -41,7 +41,7 @@ export default function Table(props) {
 
 				<div className="actions">
 					{hitDisplay && <button onClick={onClickHit}>Hit</button>}
-					{stayDisplay && <button onClick={onClickStay}>Stay</button>}
+					{standDisplay && <button onClick={onClickStand}>stand</button>}
 				</div>
 
 			</div>
