@@ -1,6 +1,6 @@
 .table {
   width: 100%;
-  /* height: 100%; */
+  height: 90%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -74,20 +74,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.btn-action {
-  width: 75px;
-  height: 30px;
-  border-radius: 5px;
-  background: white;
-  border: 3px solid rgb(24, 168, 43);
-  box-shadow: 2px 3px 5px rgba(0, 0, 0, 0.4);
-  transition: transform 100ms ease-in-out;
-}
-
-.btn-action:active {
-  transform: translateY(1px);
 }
 
 #btn-hit {

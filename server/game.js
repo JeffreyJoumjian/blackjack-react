@@ -104,7 +104,7 @@ function playerIsReady(connections, io, socket) {
 		// player is connected and ready
 		socket.player.connectionStatus = "ready";
 
-		io.emit('ready', playerIndex);
+		io.emit('ready', getPlayers(connections));
 
 		// if there are missing players => don't start
 		for (let i = 0; i < connections.length; i++)

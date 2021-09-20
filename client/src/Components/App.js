@@ -3,6 +3,7 @@ import io from 'socket.io-client';
 import AudioManager from '../Audio/AudioManager';
 
 import './App.css';
+import './Button/Button.css';
 import Table from './Table/Table';
 
 const socket = io.connect('http://localhost:3000');
@@ -26,7 +27,6 @@ function App() {
 	};
 
 	const defaultState = {
-		playAgain: false,
 		gameIsFull: false,
 		gameHasStarted: false,
 	};
@@ -52,11 +52,12 @@ function App() {
 
 	// done
 	function playerReadyListener() {
-		socket.off('ready').on('ready', (playerIndex) => {
-			if (playerIndex === playerState.playerIndex)
-				setPlayerState({ ...playerState, connectionStatus: 'ready' });
-			else
-				setOpponentState({ ...opponentState, connectionStatus: 'ready' });
+		socket.off('ready').on('ready', (players) => {
+			updatePlayerStates(players, true)
+			// if (playerIndex === playerState.playerIndex)
+			// 	setPlayerState({ ...playerState, connectionStatus: 'ready' });
+			// else
+			// 	setOpponentState({ ...opponentState, connectionStatus: 'ready' });
 		});
 	}
 
@@ -137,16 +138,6 @@ function App() {
 		clearInterval(interval);
 	}
 
-	// if both players have a result => let them play again
-	useEffect(() => {
-		if (playerState.winStatus && opponentState.winStatus)
-			setState(prevState => ({ ...prevState, playAgain: true }));
-		// setState({ ...state, playAgain: true });
-		else
-			setState(prevState => ({ ...prevState, playAgain: false }));
-	}, [playerState.winStatus, opponentState.winStatus]);
-
-
 	useEffect(() => {
 
 		// start timer
@@ -193,7 +184,7 @@ function App() {
 		setTimerOn(false);
 	}
 
-	function onClickPlayAgain() {
+	function onClickPlayAgain(e) {
 		setState(defaultState);
 		setPlayerState({ ...defaultPlayerState, playerIndex: playerState.playerIndex });
 		setOpponentState({ ...defaultOpponentState, playerIndex: opponentState.playerIndex });
@@ -220,19 +211,30 @@ function App() {
 
 			{!gameHasStarted && !gameIsFull &&
 				<>
-					<div className="opponent-container">
-						<div className="ready-container">
-							<h2>Opponent</h2>
-							<div className={`ready-indicator${opponentState.connectionStatus === "ready" ? " ready" : ""}`}></div>
-						</div>
+					<div className="title-container">
+						<p className="title">
+							<span>B</span>LACK<span>J</span>ACK 21</p>
+						<img className="logo" src="/casino2.png" alt="" />
 					</div>
 
-					<div className="player-container">
-						<div className="ready-container">
-							<h2>You</h2>
-							<div className={`ready-indicator${playerState.connectionStatus === "ready" ? " ready" : ""}`}></div>
+					<div className="lobby">
+
+						<div className="player-container">
+							<div className="ready-container">
+								<h2>You</h2>
+								<div className={`ready-indicator${playerState.connectionStatus === "ready" ? " ready" : ""}`}></div>
+							</div>
+							<button className="btn-action" id="btn-ready" onClick={onClickReady}>Ready Up</button>
 						</div>
-						<button className="btn-action" id="btn-ready" onClick={onClickReady}>Ready</button>
+
+						<div className="opponent-container">
+							<div className="ready-container">
+								<h2>Opponent</h2>
+								<div className={`ready-indicator${opponentState.connectionStatus === "ready" ? " ready" : ""}`}></div>
+							</div>
+						</div>
+
+
 					</div>
 				</>
 			}
@@ -242,6 +244,7 @@ function App() {
 					timer={timer}
 					onClickHit={onClickHit}
 					onClickStand={onClickStand}
+					onClickPlayAgain={onClickPlayAgain}
 					player={playerState}
 					opponent={opponentState}
 				/>

@@ -1,0 +1,52 @@
+.btn-action {
+  z-index: 2;
+  position: relative;
+  width: 100px;
+  height: 50px;
+  border-radius: 5px;
+  background: white;
+  border: 3px solid rgb(24, 168, 43);
+  box-shadow: 2px 3px 5px rgba(0, 0, 0, 0.4);
+  transition: transform 100ms ease-in-out;
+}
+
+.btn-action::after {
+  z-index: 1;
+  content: "";
+  background: rgb(7, 71, 16);
+  width: 105%;
+  height: 5px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 28px;
+}
+
+.btn-action:active {
+  transform: translateY(1px);
+}
+
+.pushable {
+  background: hsl(340deg 100% 32%);
+  border: none;
+  border-radius: 12px;
+  padding: 0;
+  cursor: pointer;
+}
+.front {
+  display: block;
+  padding: 12px 42px;
+  border-radius: 12px;
+  font-size: 1.25rem;
+  background: hsl(345deg 100% 47%);
+  color: white;
+  transform: translateY(-4px);
+}
+
+.pushable:active .front {
+  transform: translateY(-2px);
+}
+
+.pushable:focus:not(:focus-visible) {
+  outline: none;
+}

@@ -6,6 +6,7 @@ export default function Table(props) {
 
 	const [hitDisplay, setHitDisplay] = useState(true);
 	const [standDisplay, setStandDisplay] = useState(true);
+	const [playAgainDisplay, setPlayAgainDisplay] = useState(false);
 
 	const {
 		player, opponent,
@@ -13,6 +14,7 @@ export default function Table(props) {
 	} = props;
 
 
+	// check when to display appropriate buttons
 	useEffect(() => {
 		if (player.score >= 21 || timer <= 0 || player.winStatus) {
 			setHitDisplay(false);
@@ -22,7 +24,14 @@ export default function Table(props) {
 			setHitDisplay(true);
 			setStandDisplay(true);
 		}
-	}, [player.score, timer, player.winStatus]);
+
+		// if both players have a result
+		if (player.winStatus && opponent.winStatus)
+			setPlayAgainDisplay(true);
+		else
+			setPlayAgainDisplay(false);
+
+	}, [player.score, timer, player.winStatus, opponent.winStatus]);
 
 
 	function onClickHit(e) {
@@ -33,6 +42,10 @@ export default function Table(props) {
 		setStandDisplay(false);
 		setHitDisplay(false);
 		props.onClickStand(e);
+	}
+
+	function onClickPlayAgain(e) {
+		props.onClickPlayAgain(e);
 	}
 
 	function calculateBackgroundColor() {
@@ -72,10 +85,9 @@ export default function Table(props) {
 				}} />
 
 				<div className="actions">
-					{hitDisplay &&
-						<button
-							className="btn-action" id="btn-hit" onClick={onClickHit}>Hit</button>}
-					{standDisplay && <button className="btn-action" id="stand" onClick={onClickStand}>stand</button>}
+					{hitDisplay && <button className="btn-action" id="btn-hit" onClick={onClickHit}>Hit</button>}
+					{standDisplay && <button className="btn-action" id="btn-stand" onClick={onClickStand}>Stand</button>}
+					{playAgainDisplay && <button className="btn-action" id="btn-play" onClick={onClickPlayAgain}>Play Again</button>}
 				</div>
 			</div>
 
