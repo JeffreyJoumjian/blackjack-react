@@ -150,7 +150,7 @@ function App() {
 	useEffect(() => {
 
 		// start timer
-		startTimer();
+		// startTimer();
 
 		// get player index
 		playerIndexListener();
