@@ -8,7 +8,15 @@ class Player {
 		this.playerIndex = playerIndex;
 		this.score = 0;
 		this.cards = [];
+		this.winStatus = "";
 		this.connectionStatus = "";
+	}
+
+	resetPlayer() {
+		this.score = 0;
+		this.cards = [];
+		this.winStatus = "";
+		this.connectionStatus = "connected";
 	}
 }
 
@@ -118,6 +126,7 @@ function getPlayers(connections) {
 // done
 function startGame(connections, io, socket) {
 
+	// SUGGESTION refactor to keep using same deck
 	// generate deck
 	generateDeck();
 
@@ -126,6 +135,7 @@ function startGame(connections, io, socket) {
 
 	// for each connection
 	for (let i = 0; i < connections.length; i++) {
+		connections[i].player.resetPlayer();
 
 		connections[i].player.connectionStatus = "playing";
 
@@ -170,15 +180,16 @@ function calculateScore(cards) {
 function checkPlayerWin(connections, io, socket) {
 
 	// check individual player
+	for (let i = 0; i < connections.length; i++) {
+		let { player } = connections[i];
+		if (player.score > 21)
+			player.winStatus = "lost";
+
+		if (player.score === 21)
+			player.winStatus = "won";
+	}
+
 	let { player } = socket;
-	if (player.score > 21) {
-		player.winStatus = "lost";
-		// io.emit('lose', player.playerIndex);
-	}
-	if (player.score === 21) {
-		player.winStatus = "won";
-		// io.emit('win',player.playerIndex );
-	}
 
 	// check with other player
 	const otherPlayer = connections[1 - player.playerIndex].player;
@@ -220,21 +231,25 @@ function checkPlayerWin(connections, io, socket) {
 	let showResultsWhen = ["won", "lost", "draw"];
 	let showResults = !!(showResultsWhen.find(res => res === player.winStatus) && showResultsWhen.find(res => res === otherPlayer.winStatus));
 
-	if (showResults)
+	if (showResults) {
+		// show results
 		io.emit('show-results', getPlayers(connections));
+	}
 }
 
 // done
 function hit(connections, io, socket) {
 	socket.on('hit', () => {
+		console.log('hit');
+		const { player } = socket;
 
-		if (socket.player.score < 21) {
+		if (player.score < 21) {
 
 			// pick a random card from the deck
 			let newCard = pickCard();
 
-			socket.player.cards.push(newCard);
-			socket.player.score = calculateScore(socket.player.cards);
+			player.cards.push(newCard);
+			player.score = calculateScore(player.cards);
 
 			checkPlayerWin(connections, io, socket);
 

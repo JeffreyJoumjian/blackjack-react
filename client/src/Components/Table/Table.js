@@ -14,11 +14,15 @@ export default function Table(props) {
 
 
 	useEffect(() => {
-		if (player.score >= 21 || timer <= 0) {
+		if (player.score >= 21 || timer <= 0 || player.winStatus) {
 			setHitDisplay(false);
 			setStandDisplay(false);
 		}
-	}, [player.score, timer]);
+		else {
+			setHitDisplay(true);
+			setStandDisplay(true);
+		}
+	}, [player.score, timer, player.winStatus]);
 
 
 	function onClickHit(e) {
@@ -57,8 +61,12 @@ export default function Table(props) {
 				}} />
 
 				<div className="actions">
-					{hitDisplay && <button id="hit" onClick={onClickHit}>Hit</button>}
-					{standDisplay && <button id="stand" onClick={onClickStand}>stand</button>}
+					{hitDisplay &&
+						<button
+							className="btn-action" id="hit"
+							style={{ marginRight: `${20}px` }}
+							onClick={onClickHit}>Hit</button>}
+					{standDisplay && <button className="btn-action" id="stand" onClick={onClickStand}>stand</button>}
 				</div>
 
 			</div>

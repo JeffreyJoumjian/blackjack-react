@@ -26,8 +26,7 @@ function App() {
 	};
 
 	const defaultState = {
-		isReadyPlayer: false,
-		isReadyOpponent: false,
+		playAgain: false,
 		gameIsFull: false,
 		gameHasStarted: false,
 	};
@@ -63,8 +62,8 @@ function App() {
 
 
 	function gameStartListener() {
-		socket.off('start').on('start', (data) => {
-			setState({ ...state, gameHasStarted: true });
+		socket.off('start').on('start', () => {
+			setState({ ...state, gameHasStarted: true, playAgain: false });
 			setTimer(6);
 			setTimerOn(true);
 		});
@@ -102,20 +101,26 @@ function App() {
 	}
 
 	function showResultsListener() {
-		socket.off('show-results').on('show-results', (players) => updatePlayerStates(players, true));
+		socket.off('show-results').on('show-results', (players) => {
+			updatePlayerStates(players, true);
+			setState({ ...state, playAgain: true });
+		});
 	}
 
 	// done
 	function updatePlayerStates(players, hand = false) {
 		players.forEach(player => {
-			if (player.playerIndex === playerState.playerIndex)
+			if (player.playerIndex === playerState.playerIndex) {
+				console.log(player);
 				setPlayerState({ ...playerState, ...player });
+			}
 			else
 				if (hand)
 					setOpponentState({ ...opponentState, ...player });
 
 		});
 	}
+
 
 	function startTimer() {
 		interval = null;
@@ -140,9 +145,6 @@ function App() {
 		socket.off('hands');
 		socket.off('hit');
 		socket.off('stand');
-		socket.off('win');
-		socket.off('lose');
-		socket.off('draw');
 
 		clearInterval(interval);
 	}
@@ -197,7 +199,13 @@ function App() {
 		setTimerOn(false);
 	}
 
-	const { gameHasStarted, gameIsFull } = state;
+	function onClickPlayAgain() {
+		setState(defaultState);
+		setPlayerState({ ...defaultPlayerState, playerIndex: playerState.playerIndex });
+		setOpponentState({ ...defaultOpponentState, playerIndex: opponentState.playerIndex });
+	}
+
+	const { gameHasStarted, gameIsFull, playAgain } = state;
 
 
 	return (
@@ -224,7 +232,7 @@ function App() {
 							<h2>You</h2>
 							<div className={`ready-indicator${playerState.connectionStatus === "ready" ? " ready" : ""}`}></div>
 						</div>
-						<button onClick={onClickReady}>Ready</button>
+						<button className="btn-action" onClick={onClickReady}>Ready</button>
 					</div>
 
 					<div className="opponent-container">
@@ -245,6 +253,8 @@ function App() {
 					opponent={opponentState}
 				/>
 			}
+
+			{playAgain && <button onClick={onClickPlayAgain}>Play Again</button>}
 		</div>
 	);
 }
