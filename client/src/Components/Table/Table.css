@@ -1,8 +1,8 @@
 .table {
   width: 100%;
-  height: 100%;
+  /* height: 100%; */
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
 }
@@ -15,6 +15,8 @@
 }
 
 .card {
+  border: 4px solid #fff inset;
+  border-radius: 5px 10px 5px 10px;
   width: 100px;
   height: 145.2px;
   cursor: none;
@@ -27,16 +29,28 @@
   box-shadow: 4px 4px 4px 5px rgba(0, 0, 0, 0.135);
 }
 
+.player-hand .card:last-of-type {
+  animation: cardDraw 250ms 50ms ease-in-out;
+}
+
+@keyframes cardDraw {
+  0% {
+    transform: translateY(-45%);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+.player-hand {
+  margin-top: 20px;
+}
+
 .player,
 .opponent {
   display: flex;
   flex-direction: column;
   width: 50%px;
-  height: 300px;
-}
-
-.player-hand {
-  margin-right: 150px;
 }
 
 .status {
@@ -62,10 +76,6 @@
   justify-content: center;
 }
 
-.actions {
-  margin-top: 20px;
-}
-
 .btn-action {
   width: 75px;
   height: 30px;
@@ -80,9 +90,17 @@
   transform: translateY(1px);
 }
 
+#btn-hit {
+  margin-right: 50px;
+}
+
 .timer {
-  margin-top: 20px;
+  margin: 20px 0;
   height: 10px;
   border-radius: 10px;
   transition: width 10ms ease-in, background 150ms ease-in-out;
+}
+
+.actions {
+  height: 30px;
 }

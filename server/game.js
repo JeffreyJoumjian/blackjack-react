@@ -40,7 +40,7 @@ function pickCard() {
 function dealHand() {
 	let hand = [];
 
-	if (deck.length < 4)
+	if (deck.length < 2)
 		deck = generateDeck();
 
 	// generate 2 cards for each
@@ -118,9 +118,7 @@ function playerIsReady(connections, io, socket) {
 
 // done
 function getPlayers(connections) {
-	let players = [];
-	connections.forEach(con => players.push(con.player));
-	return players;
+	return connections.map(con => con.player);
 }
 
 // done
@@ -232,6 +230,7 @@ function checkPlayerWin(connections, io, socket) {
 	let showResults = !!(showResultsWhen.find(res => res === player.winStatus) && showResultsWhen.find(res => res === otherPlayer.winStatus));
 
 	if (showResults) {
+		console.log('results');
 		// show results
 		io.emit('show-results', getPlayers(connections));
 	}

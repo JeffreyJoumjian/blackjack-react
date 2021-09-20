@@ -46,11 +46,22 @@ export default function Table(props) {
 
 	return (
 		<div className="table">
+
+			<div className="opponent">
+				<p className="status opponent-status">{opponent.winStatus && `${opponent.winStatus}`}</p>
+				<div className="hand opponent-hand">
+					{opponent.cards.map((card, i) =>
+						<Card value={card.value} suit={card.suit} key={i} position={i} />)
+					}
+					<div className="counter">{`${opponent.score}`}</div>
+				</div>
+			</div>
+
 			<div className="player">
 				<p className="status player-status">{player.winStatus && `${player.winStatus}`}</p>
 				<div className="hand player-hand">
 					{player.cards.map((card, i) =>
-						<Card value={card.value} suit={card.suit} key={i} position={i} />)
+						<Card value={card.value} suit={card.suit} key={i} position={i} last={i === player.cards.length} />)
 					}
 					<div className="counter">{`${player.score}`}</div>
 				</div>
@@ -63,24 +74,11 @@ export default function Table(props) {
 				<div className="actions">
 					{hitDisplay &&
 						<button
-							className="btn-action" id="hit"
-							style={{ marginRight: `${20}px` }}
-							onClick={onClickHit}>Hit</button>}
+							className="btn-action" id="btn-hit" onClick={onClickHit}>Hit</button>}
 					{standDisplay && <button className="btn-action" id="stand" onClick={onClickStand}>stand</button>}
 				</div>
-
 			</div>
 
-			<div className="opponent">
-				<p className="status opponent-status">{opponent.winStatus && `${opponent.winStatus}`}</p>
-				<div className="hand opponent-hand">
-					{opponent.cards.map((card, i) =>
-						<Card value={card.value} suit={card.suit} key={i} position={i} />)
-					}
-					<div className="counter">{`${opponent.score}`}</div>
-				</div>
-
-			</div>
 		</div>
 	)
 }

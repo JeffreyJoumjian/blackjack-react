@@ -16,7 +16,7 @@ body,
 
 .App {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
 
@@ -38,11 +38,11 @@ input {
 }
 
 .player-container {
-  margin-right: 100px;
+  /* margin-right: 100px; */
 }
 
 .ready-container {
-  margin-bottom: 20px;
+  /* margin-bottom: 20px; */
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -58,4 +58,8 @@ input {
 
 .ready {
   background: #23e223;
+}
+
+#btn-ready {
+  margin-top: 20px;
 }

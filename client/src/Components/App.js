@@ -63,7 +63,7 @@ function App() {
 
 	function gameStartListener() {
 		socket.off('start').on('start', () => {
-			setState({ ...state, gameHasStarted: true, playAgain: false });
+			setState({ ...state, gameHasStarted: true });
 			setTimer(6);
 			setTimerOn(true);
 		});
@@ -73,7 +73,6 @@ function App() {
 	// done
 	function getHandsListener() {
 		socket.off('hands').on('hands', (players) => {
-
 			AudioManager.playHandSound();
 			updatePlayerStates(players, true);
 		});
@@ -86,16 +85,6 @@ function App() {
 		});
 	}
 
-	// todo
-	// function newGameListener() {
-	// 	if (playerWinStatus && opponentWinStatus) {
-	// 		setTimeout(() => {
-	// 			setState({ ...defaultState, playerIndex });
-	// 		}, 1500);
-	// 	}
-	// }
-
-	// todo
 	function standListener() {
 		socket.off('stand').on('stand', (players) => updatePlayerStates(players));
 	}
@@ -103,7 +92,6 @@ function App() {
 	function showResultsListener() {
 		socket.off('show-results').on('show-results', (players) => {
 			updatePlayerStates(players, true);
-			setState({ ...state, playAgain: true });
 		});
 	}
 
@@ -111,7 +99,6 @@ function App() {
 	function updatePlayerStates(players, hand = false) {
 		players.forEach(player => {
 			if (player.playerIndex === playerState.playerIndex) {
-				console.log(player);
 				setPlayerState({ ...playerState, ...player });
 			}
 			else
@@ -145,9 +132,19 @@ function App() {
 		socket.off('hands');
 		socket.off('hit');
 		socket.off('stand');
+		socket.off('show-results')
 
 		clearInterval(interval);
 	}
+
+	// if both players have a result => let them play again
+	useEffect(() => {
+		if (playerState.winStatus && opponentState.winStatus)
+			setState(prevState => ({ ...prevState, playAgain: true }));
+		// setState({ ...state, playAgain: true });
+		else
+			setState(prevState => ({ ...prevState, playAgain: false }));
+	}, [playerState.winStatus, opponentState.winStatus]);
 
 
 	useEffect(() => {
@@ -175,9 +172,6 @@ function App() {
 
 		// listen for results
 		showResultsListener();
-
-		// new hand listener
-		// newGameListener();
 
 		return clear;
 	});
@@ -226,20 +220,19 @@ function App() {
 
 			{!gameHasStarted && !gameIsFull &&
 				<>
-					<div className="player-container">
-
-						<div className="ready-container">
-							<h2>You</h2>
-							<div className={`ready-indicator${playerState.connectionStatus === "ready" ? " ready" : ""}`}></div>
-						</div>
-						<button className="btn-action" onClick={onClickReady}>Ready</button>
-					</div>
-
 					<div className="opponent-container">
 						<div className="ready-container">
 							<h2>Opponent</h2>
 							<div className={`ready-indicator${opponentState.connectionStatus === "ready" ? " ready" : ""}`}></div>
 						</div>
+					</div>
+
+					<div className="player-container">
+						<div className="ready-container">
+							<h2>You</h2>
+							<div className={`ready-indicator${playerState.connectionStatus === "ready" ? " ready" : ""}`}></div>
+						</div>
+						<button className="btn-action" id="btn-ready" onClick={onClickReady}>Ready</button>
 					</div>
 				</>
 			}
@@ -254,7 +247,7 @@ function App() {
 				/>
 			}
 
-			{playAgain && <button onClick={onClickPlayAgain}>Play Again</button>}
+			{!gameIsFull && playAgain && <button onClick={onClickPlayAgain} className="btn-action">Play Again</button>}
 		</div>
 	);
 }
