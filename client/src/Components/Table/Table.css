@@ -9,8 +9,6 @@
 
 .hand {
   position: relative;
-  /* width: 200px;
-  height: 180px; */
   width: 9rem;
   height: 12rem;
   overflow-x: visible;
@@ -20,8 +18,6 @@
 .card {
   border: none;
   border-radius: 5px 10px 5px 10px;
-  /* width: 100px;
-  height: 145.2px; */
   width: 8rem;
   height: 11.616rem;
   cursor: none;
@@ -54,9 +50,6 @@
 .player,
 .opponent {
   display: flex;
-  /* flex-direction: column;
-  align-items: center;
-  width: 50%; */
   flex-direction: row;
   align-items: center;
   justify-content: center;
@@ -145,7 +138,3 @@
   align-items: center;
   justify-content: center;
 }
-
-/* #btn-play {
-  margin: auto;
-} */

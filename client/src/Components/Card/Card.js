@@ -1,6 +1,6 @@
 export default function Card(props) {
 
-	const { value, suit, position, last, total } = props;
+	const { value, suit, position, last } = props;
 
 	return (
 		<img

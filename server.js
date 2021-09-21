@@ -8,15 +8,15 @@ const server = require('http').createServer(app);
 
 let corsOptions = { cors: { origin: ["http://127.0.0.1:3001", "http://localhost:3001"] } };
 
-// app.use(express.static(path.join(__dirname, "./client/build")));
+app.use(express.static(path.join(__dirname, "./client/build")));
 
 if (process.env.NODE_ENV === "production") {
 
 	app.use(express.static(path.join(__dirname, "./client/build")));
 }
 
-const io = require('socket.io')(server, corsOptions); // dev
-// const io = require('socket.io')(server); // prod
+// const io = require('socket.io')(server, corsOptions); // dev
+const io = require('socket.io')(server); // prod
 
 const connections = [null, null];
 io.on('connection', socket => {

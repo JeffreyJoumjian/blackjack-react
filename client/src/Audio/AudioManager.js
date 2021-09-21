@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import cardSound from './card.mp3';
 import handSound from './shuffling.mp3';
 import winSound from './win.wav';

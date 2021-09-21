@@ -7,8 +7,8 @@ import Table from './Table/Table';
 import Button from './Button/Button';
 
 
-const socket = io.connect('http://localhost:3000'); // local
-// const socket = io.connect("/"); // production
+// const socket = io.connect('http://localhost:3000'); // local
+const socket = io.connect("/"); // production
 
 function App() {
 

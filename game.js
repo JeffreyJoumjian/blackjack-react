@@ -15,7 +15,6 @@ class Player {
 	}
 
 	resetPlayer(playAgain) {
-		console.log(playAgain);
 		this.score = 0;
 		this.totalScore = playAgain ? this.totalScore : 0;
 		this.cards = [];
@@ -24,7 +23,7 @@ class Player {
 	}
 }
 
-// generate 1 decks
+// generate 1 deck
 function generateDeck() {
 
 	for (let s = 0; s < 4; s++)
@@ -41,11 +40,9 @@ function pickCard() {
 	return card;
 }
 
+// draw 2 cards from the deck
 function dealHand() {
 	let hand = [];
-
-	if (deck.length < 2)
-		deck = generateDeck();
 
 	// generate 2 cards for each
 	for (let j = 0; j < 2; j++)
@@ -64,18 +61,16 @@ function playerHasConnected(connections, io, socket) {
 		}
 	}
 
-
 	console.log(`player ${playerIndex} has connected`);
 	socket.emit('player-index', playerIndex);
 
 	if (playerIndex === -1) return;
 
-	// player is connected but not ready
+	// player is connected => create new player object to keep track of player properties
 	let player = new Player(playerIndex);
 	player.connectionStatus = "connected"
 
 	socket.player = player;
-
 	connections[playerIndex] = socket;
 }
 
@@ -90,6 +85,8 @@ function playerHasDisconnected(connections, io, socket) {
 			socket.player = null;
 			connections[playerIndex] = null;
 		}
+
+		// no longer same players => new game => reset players
 		playAgain = false;
 
 		for (let i = 0; i < connections.length; i++)
@@ -101,7 +98,6 @@ function playerHasDisconnected(connections, io, socket) {
 	});
 }
 
-// done
 function playerIsReady(connections, io, socket) {
 
 	// player has readied up
@@ -109,13 +105,10 @@ function playerIsReady(connections, io, socket) {
 
 		const { playerIndex } = socket.player;
 
-		console.log(`player ${playerIndex} is ready`);
-
-		// let both players know that they readied up
-
 		// player is connected and ready
 		socket.player.connectionStatus = "ready";
 
+		// let both players know that a player has readied up
 		io.emit('ready', getPlayers(connections));
 
 		// if there are missing players => don't start
@@ -123,12 +116,13 @@ function playerIsReady(connections, io, socket) {
 			if (!connections[i] || connections[i].player.connectionStatus !== "ready")
 				return;
 
-		// if we're here then both players are connected and ready => start game
+		// if both players are connected and ready => start game
 		setTimeout(() => startGame(connections, io, socket), 1000);
 	});
 }
 
-// done
+// loop over connections and get player objects 
+// sent to clients to update their local properties
 function getPlayers(connections) {
 	return connections.reduce((players, con) => {
 		if (con && con.player)
@@ -137,14 +131,12 @@ function getPlayers(connections) {
 	}, []);
 }
 
-// done
 function startGame(connections, io, socket) {
 
-	// SUGGESTION refactor to keep using same deck
 	// generate deck
 	generateDeck();
 
-	// for each connection
+	// loop over each connection, update connection status and deal hands
 	for (let i = 0; i < connections.length; i++) {
 		connections[i].player.resetPlayer(playAgain);
 		connections[i].player.connectionStatus = "playing";
@@ -155,8 +147,6 @@ function startGame(connections, io, socket) {
 		connections[i].player.score = calculateScore(playerCards);
 		checkPlayerWin(connections, io, socket);
 	}
-
-	console.log('dealt hands');
 
 	io.emit('hands', getPlayers(connections));
 	io.emit('start');
@@ -169,7 +159,6 @@ function playAgainReset(socket) {
 	});
 }
 
-// done
 function calculateScore(cards) {
 
 	let score = 0;
@@ -177,6 +166,8 @@ function calculateScore(cards) {
 
 	for (let i = 0; i < cards.length; i++) {
 		let card = parseInt(cards[i].value);
+
+		//  count the first ace as 11
 		if (card === 1 && aceCounter === 0) {
 			aceCounter++;
 			score += 11
@@ -185,6 +176,7 @@ function calculateScore(cards) {
 			score += card;
 		}
 
+		// if there is an ace and the total score exceed 21 => remove 10 so the ace counts as one
 		if (score > 21 && aceCounter === 1) {
 			score -= 10;
 			aceCounter = -1;
@@ -193,7 +185,6 @@ function calculateScore(cards) {
 	return score;
 }
 
-// done
 function checkPlayerWin(connections, io, socket) {
 
 	// check individual player
@@ -251,24 +242,25 @@ function checkPlayerWin(connections, io, socket) {
 
 	if (showResults) {
 
-		// update player scores
+		// update player total scores
 		for (let i = 0; i < connections.length; i++) {
 			let { player } = connections[i];
-			if (player.winStatus === "won" || player.winStatus === "draw") player.totalScore++;
+			if (player.winStatus === "won" || player.winStatus === "draw") {
+				if (player.score === 21)
+					player.totalScore += 2;
+				else
+					player.totalScore++;
+			}
 		}
 
-		console.log('results');
 		// show results
 		io.emit('show-results', getPlayers(connections));
-
-		console.log(getPlayers(connections));
 	}
 }
 
 // done
 function hit(connections, io, socket) {
 	socket.on('hit', () => {
-		console.log('hit');
 		const { player } = socket;
 
 		if (player.score < 21) {
@@ -286,10 +278,8 @@ function hit(connections, io, socket) {
 	});
 }
 
-// done
 function stand(connections, io, socket) {
 	socket.on('stand', () => {
-		console.log('stand');
 		socket.player.winStatus = "stand";
 
 		checkPlayerWin(connections, io, socket);
