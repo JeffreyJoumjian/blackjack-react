@@ -50,7 +50,8 @@
 .opponent {
   display: flex;
   flex-direction: column;
-  width: 50%px;
+  align-items: center;
+  width: 50%;
 }
 
 .status {
@@ -80,13 +81,41 @@
   margin-right: 50px;
 }
 
-.timer {
-  margin: 20px 0;
+.timer-container {
+  width: 250px;
   height: 10px;
+  position: relative;
+  margin: 20px 0;
+}
+
+.timer,
+.timer-bg {
+  position: absolute;
+  top: 50%;
+  left: 0%;
+  transform: translateY(-50%);
+  height: 100%;
   border-radius: 10px;
+}
+
+.timer {
+  z-index: 2;
   transition: width 10ms ease-in, background 150ms ease-in-out;
 }
 
-.actions {
-  height: 30px;
+.timer-bg {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.3);
 }
+
+.actions {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+/* #btn-play {
+  margin: auto;
+} */

@@ -3,8 +3,8 @@ import io from 'socket.io-client';
 import AudioManager from '../Audio/AudioManager';
 
 import './App.css';
-import './Button/Button.css';
 import Table from './Table/Table';
+import Button from './Button/Button';
 
 const socket = io.connect('http://localhost:3000');
 
@@ -141,7 +141,7 @@ function App() {
 	useEffect(() => {
 
 		// start timer
-		// startTimer();
+		startTimer();
 
 		// get player index
 		playerIndexListener();
@@ -224,7 +224,6 @@ function App() {
 								<h2>You</h2>
 								<div className={`ready-indicator${playerState.connectionStatus === "ready" ? " ready" : ""}`}></div>
 							</div>
-							<button className="btn-action" id="btn-ready" onClick={onClickReady}>Ready Up</button>
 						</div>
 
 						<div className="opponent-container">
@@ -234,8 +233,8 @@ function App() {
 							</div>
 						</div>
 
-
 					</div>
+					<Button id="btn-ready" onClick={onClickReady} text="Ready Up" />
 				</>
 			}
 
@@ -249,8 +248,6 @@ function App() {
 					opponent={opponentState}
 				/>
 			}
-
-			{!gameIsFull && playAgain && <button onClick={onClickPlayAgain} className="btn-action">Play Again</button>}
 		</div>
 	);
 }
