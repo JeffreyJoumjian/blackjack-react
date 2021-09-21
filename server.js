@@ -1,13 +1,25 @@
-const app = require('express')();
+const express = require('express');
+const app = express();
+const path = require('path');
 
 const GameManager = require('./game.js');
 
 const server = require('http').createServer(app);
-const io = require('socket.io')(server, {
-	cors: {
-		origin: ["http://127.0.0.1:3001", "http://localhost:3001"]
-	}
-});
+
+let corsOptions = { cors: { origin: ["http://127.0.0.1:3001", "http://localhost:3001"] } };
+// app.use(express.static(path.join(__dirname, "./client/build")));
+
+console.log(process.env.NODE_ENV);
+if (process.env.NODE_ENV === "production") {
+	corsOptions = null;
+
+	app.use(express.static(path.join(__dirname, "./client/build")));
+}
+
+
+
+const io = require('socket.io')(server, corsOptions);
+
 
 const connections = [null, null];
 io.on('connection', socket => {
