@@ -1,15 +1,18 @@
 import { useMemo } from 'react';
 import cardSound from './card.mp3';
-import cardSound2 from './card2.mp3';
 import handSound from './shuffling.mp3';
+import winSound from './win.wav';
 
 const SoundManager = {
 	playCardSound: () => {
-		new Audio(cardSound2).play();
+		new Audio(cardSound).play();
 	},
 
 	playHandSound: () => {
 		new Audio(handSound).play();
+	},
+	playWinSound: () => {
+		new Audio(winSound).play();
 	}
 };
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Card from '../Card/Card';
 import './Table.css';
 import Button from '../Button/Button';
+import Status from '../Status';
 
 export default function Table(props) {
 
@@ -62,7 +63,7 @@ export default function Table(props) {
 		<div className="table">
 
 			<div className="opponent">
-				<p className="status opponent-status">{opponent.winStatus && `${opponent.winStatus}`}</p>
+				<Status status={opponent.winStatus} type="opponent" />
 				<div className="hand opponent-hand">
 					{opponent.cards.map((card, i) =>
 						<Card
@@ -78,7 +79,7 @@ export default function Table(props) {
 			</div>
 
 			<div className="player">
-				<p className="status player-status">{player.winStatus && `${player.winStatus}`}</p>
+				<Status status={player.winStatus} type="player" />
 				<div className="hand player-hand">
 					{player.cards.map((card, i) =>
 						<Card
@@ -91,19 +92,19 @@ export default function Table(props) {
 					}
 					<div className="counter">{`${player.score}`}</div>
 				</div>
-				<div className="timer-container" style={{ opacity: `${player.winStatus ? 0 : 1}` }}>
-					<div className="timer" style={{
-						width: `${timer * 250 / 6}px`,
-						background: `${calculateBackgroundColor()}`
-					}} />
-					<div className="timer-bg" />
-				</div>
 
-				<div className="actions">
-					{hitDisplay && <Button id="btn-hit" onClick={onClickHit} text="Hit" />}
-					{standDisplay && <Button id="btn-stand" onClick={onClickStand} text="Stand" />}
-					{playAgainDisplay && <Button id="btn-play" onClick={onClickPlayAgain} text="Play Again" />}
-				</div>
+			</div>
+			<div className="timer-container" style={{ opacity: `${player.winStatus ? 0 : 1}` }}>
+				<div className="timer" style={{
+					width: `${timer * 250 / 6}px`,
+					background: `${calculateBackgroundColor()}`
+				}} />
+				<div className="timer-bg" />
+			</div>
+			<div className="actions">
+				{hitDisplay && <Button id="btn-hit" onClick={onClickHit} text="Hit" />}
+				{standDisplay && <Button id="btn-stand" onClick={onClickStand} text="Stand" />}
+				{playAgainDisplay && <Button id="btn-play" onClick={onClickPlayAgain} text="Play Again" />}
 			</div>
 
 		</div>

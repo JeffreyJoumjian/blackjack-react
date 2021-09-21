@@ -1,19 +1,23 @@
 const suits = ["hearts", "spades", "clubs", "diamonds"];
 let deck = [];
+let playAgain = false;
 
 class Player {
-	playerIndex; connectionStatus; winStatus; score; cards;
+	playerIndex; connectionStatus; winStatus; score; totalScore; cards;
 
 	constructor(playerIndex) {
 		this.playerIndex = playerIndex;
 		this.score = 0;
+		this.totalScore = 0;
 		this.cards = [];
 		this.winStatus = "";
 		this.connectionStatus = "";
 	}
 
-	resetPlayer() {
+	resetPlayer(playAgain) {
+		console.log(playAgain);
 		this.score = 0;
+		this.totalScore = playAgain ? this.totalScore : 0;
 		this.cards = [];
 		this.winStatus = "";
 		this.connectionStatus = "connected";
@@ -86,6 +90,14 @@ function playerHasDisconnected(connections, io, socket) {
 			socket.player = null;
 			connections[playerIndex] = null;
 		}
+		playAgain = false;
+
+		for (let i = 0; i < connections.length; i++)
+			if (connections[i] && connections[i].player)
+				connections[i].player.resetPlayer(playAgain);
+
+		// emit disconnect to other player
+		io.emit('player-disconnected');
 	});
 }
 
@@ -118,7 +130,11 @@ function playerIsReady(connections, io, socket) {
 
 // done
 function getPlayers(connections) {
-	return connections.map(con => con.player);
+	return connections.reduce((players, con) => {
+		if (con && con.player)
+			players.push(con.player);
+		return players;
+	}, []);
 }
 
 // done
@@ -128,13 +144,9 @@ function startGame(connections, io, socket) {
 	// generate deck
 	generateDeck();
 
-	// generate cards for all players and send
-	// const playersCards = [];
-
 	// for each connection
 	for (let i = 0; i < connections.length; i++) {
-		connections[i].player.resetPlayer();
-
+		connections[i].player.resetPlayer(playAgain);
 		connections[i].player.connectionStatus = "playing";
 
 		let playerCards = dealHand();
@@ -148,6 +160,13 @@ function startGame(connections, io, socket) {
 
 	io.emit('hands', getPlayers(connections));
 	io.emit('start');
+}
+
+function playAgainReset(socket) {
+	socket.on('play-again', () => {
+		playAgain = true;
+		socket.player.resetPlayer(playAgain);
+	});
 }
 
 // done
@@ -174,7 +193,7 @@ function calculateScore(cards) {
 	return score;
 }
 
-// todo
+// done
 function checkPlayerWin(connections, io, socket) {
 
 	// check individual player
@@ -226,13 +245,23 @@ function checkPlayerWin(connections, io, socket) {
 		otherPlayer.winStatus = "draw";
 	}
 
+
 	let showResultsWhen = ["won", "lost", "draw"];
 	let showResults = !!(showResultsWhen.find(res => res === player.winStatus) && showResultsWhen.find(res => res === otherPlayer.winStatus));
 
 	if (showResults) {
+
+		// update player scores
+		for (let i = 0; i < connections.length; i++) {
+			let { player } = connections[i];
+			if (player.winStatus === "won" || player.winStatus === "draw") player.totalScore++;
+		}
+
 		console.log('results');
 		// show results
 		io.emit('show-results', getPlayers(connections));
+
+		console.log(getPlayers(connections));
 	}
 }
 
@@ -272,6 +301,7 @@ function stand(connections, io, socket) {
 module.exports = {
 	playerHasConnected,
 	playerHasDisconnected,
+	playAgainReset,
 	playerIsReady,
 	hit,
 	stand,
